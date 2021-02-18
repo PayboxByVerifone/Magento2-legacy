@@ -1,6 +1,6 @@
 {
-  "name": "emilient/paybox-epayment-fix-2.0.1",
-  "description": "Epayment payment module for Magento 2.3, 2.4",
+  "name": "emilient/paybox-epayment",
+  "description": "Verifone Paybox Epayment module for Magento 2.3, 2.4",
   "type": "magento2-module",
   "version": "2.0.1",
   "license": [
@@ -8,7 +8,7 @@
     "AFL-3.0"
   ],
   "require": {
-    "php": "~7.1.3||^7.2.0"
+    "php": "~7.1.3||^7.2.0||^7.3.0||^7.4.0"
   },
   "autoload": {
     "files": [ "registration.php" ],
