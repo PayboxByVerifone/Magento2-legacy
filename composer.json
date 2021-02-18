@@ -1,5 +1,5 @@
 {
-  "name": "paybox/epayment-fix-2.0.1",
+  "name": "emilient/paybox-epayment-fix-2.0.1",
   "description": "Epayment payment module for Magento 2.3, 2.4",
   "type": "magento2-module",
   "version": "2.0.1",
