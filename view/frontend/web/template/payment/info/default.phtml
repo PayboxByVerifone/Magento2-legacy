@@ -8,7 +8,7 @@
  * LICENSE: This source file is subject to the version 3.0 of the Open
  * Software License (OSL-3.0) that is available through the world-wide-web
  * at the following URI: http://opensource.org/licenses/OSL-3.0. If
- * you did not receive a copy of the OSL-3.0 license and are unable 
+ * you did not receive a copy of the OSL-3.0 license and are unable
  * to obtain it through the web, please send a note to
  * support@paybox.com so we can mail you a copy immediately.
  *
@@ -38,7 +38,7 @@ $threeTime = $this->getThreeTimeLabels();
     <tr>
         <td><img alt="<?php echo $this->escapeHtml($this->getCardImageLabel()); ?>" src="<?php echo $this->escapeHtml($this->getCardImageUrl()); ?>"/></td>
     </tr>
-<?php if (isset($data['ip'])): ?>
+    <?php if (isset($data['ip'])): ?>
     <tr>
         <th><?php echo $this->__('Country of IP'); ?></th>
     </tr>
@@ -52,7 +52,7 @@ $threeTime = $this->getThreeTimeLabels();
     <tr>
         <td><?php echo $this->escapeHtml(preg_replace('/^([0-9]{2})([0-9]{2})([0-9]{4})$/', '$1/$2/$3', $data['date'])); ?></td>
     </tr>
-<?php if (!is_null($debitType)): ?>
+    <?php if (!is_null($debitType)): ?>
     <tr>
         <th><?php echo $this->__('Debit type'); ?></th>
     </tr>
@@ -60,7 +60,7 @@ $threeTime = $this->getThreeTimeLabels();
         <td><?php echo $this->escapeHtml($debitType); ?></td>
     </tr>
 <?php endif; ?>
-<?php if (!is_null($threeTime)): ?>
+    <?php if (!is_null($threeTime)): ?>
     <tr>
         <th><?php echo $this->__('First debit'); ?></th>
     </tr>
@@ -80,7 +80,7 @@ $threeTime = $this->getThreeTimeLabels();
         <td><?php echo $this->escapeHtml($threeTime['third']); ?></td>
     </tr>
 <?php endif; ?>
-<?php if (isset($data['country'])): ?>
+    <?php if (isset($data['country'])): ?>
     <tr>
         <th><?php echo $this->__('Card country'); ?></th>
     </tr>
@@ -88,7 +88,7 @@ $threeTime = $this->getThreeTimeLabels();
         <td><?php echo $this->escapeHtml($data['country']); ?></td>
     </tr>
 <?php endif; ?>
-<?php if (isset($data['firstNumbers']) && isset($data['lastNumbers'])): ?>
+    <?php if (isset($data['firstNumbers']) && isset($data['lastNumbers'])): ?>
     <tr>
         <th><?php echo $this->__('Card numbers'); ?></th>
     </tr>
@@ -96,7 +96,7 @@ $threeTime = $this->getThreeTimeLabels();
         <td><?php echo $this->escapeHtml($data['firstNumbers'].'...'.$data['lastNumbers']); ?></td>
     </tr>
 <?php endif; ?>
-<?php if (isset($data['validity'])): ?>
+    <?php if (isset($data['validity'])): ?>
     <tr>
         <th><?php echo $this->__('Validity date'); ?></th>
     </tr>
