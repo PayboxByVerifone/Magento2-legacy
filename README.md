@@ -15,7 +15,7 @@ En une seule intégration, offrez plusieurs méthodes de paiement, bénéficiez 
 3. Exécuter la commande suivante pour la récupération des fichiers du module via Composer (un dossier `paybox` sera créé dans le sous-dossier `vendor`). Vous aurez besoin de votre `Public key` comme identifiant et de votre `Private key` comme mot de passe :
 
     ```sh
-	composer require paybox/epayment23
+	composer require paybox/epayment
     ```
 
 4. Exécuter les commandes suivantes pour l'installation, l'activation et le déploiement du module :
@@ -41,6 +41,10 @@ Pour utiliser le module en réel en environnement de production, vous devez avoi
 
 ### Versions 2.2.1, 2.2.2
 La sauvegarde des paramètres du module dans le BackOffice pose problème (Account Settings): les champs `password` et `hmacalgo` étant réencryptés à chaque sauvegarde.
+Donc pour tester le module en mode démo, pensez-bien a enregistrer le mot de passe et la clé hmac avant vos test
+ * Mot de passe sandbox : 1999888I
+ * HMac sandbox : 0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
+
 
 ### Problème en partie résolu sur Magento 2.3.x (2.3-dev)
 Commit 305bf94b7401065ea0aaf2c18af93ce7b8dfca15)

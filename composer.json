@@ -1,8 +1,8 @@
 {
   "name": "paybox/epayment23",
-  "description": "Epayment payment module for Magento 2.3",
+  "description": "Epayment payment module for Magento 2.3, 2.4",
   "type": "magento2-module",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "license": [
     "OSL-3.0",
     "AFL-3.0"

@@ -1,5 +1,10 @@
 # Change Log
 
+## [2.0.1] 2021.02.18
+
+- Fix errors that make impossible to execute setup:di:compile
+- Composer: PHP 7.4+ (Magento 2.4)
+
 ## [2.0.0] 2019-03-07
 
 - Code : Implementation du Csrf (incompatible avec PHP < 7.1)
