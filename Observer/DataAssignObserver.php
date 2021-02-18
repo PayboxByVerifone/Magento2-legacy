@@ -46,6 +46,7 @@ class DataAssignObserver extends AbstractDataAssignObserver
 
         $additionalData = new DataObject($additionalData);
         $payment = $observer->getPaymentModel();
+        $additionalData->setData('cc_type', $additionalData->getData('cc_type') ?? 'VISA');
         $payment->setCcType($additionalData->getData('cc_type'));
 
         $cctype = $payment->getCcType();
