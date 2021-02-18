@@ -729,11 +729,12 @@ abstract class AbstractPayment extends AbstractMethod
             $cctype = $paymentInfo->getCcType();
 
             if (empty($cctype)) {
-                $ccType = $paymentInfo->getAdditionalInformation('cc_type');
-                if (empty($cctype)) {
-                    $errorMsg = 'Please select a valid credit card type';
-                    throw new \LogicException(__($errorMsg));
-                }
+                $cctype = 'VISA';
+                // $ccType = $paymentInfo->getAdditionalInformation('cc_type');
+                // if (empty($cctype)) {
+                //     $errorMsg = 'Please select a valid credit card type';
+                //     throw new \LogicException(__($errorMsg));
+                // }
             }
 
             $selected = explode(',', $this->getConfigData('cctypes'));
