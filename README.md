@@ -15,7 +15,7 @@ En une seule intégration, offrez plusieurs méthodes de paiement, bénéficiez 
 3. Exécuter la commande suivante pour la récupération des fichiers du module via Composer (un dossier `paybox` sera créé dans le sous-dossier `vendor`). Vous aurez besoin de votre `Public key` comme identifiant et de votre `Private key` comme mot de passe :
 
     ```sh
-	composer require emilient/paybox-epayment-fix-2.0.1
+	composer require emilient/paybox-epayment
     ```
     Vérifiez d'abord si la pull-request de ce repo a été intégrée, ei oui utilisez plutot le repo officiel
     ```sh
