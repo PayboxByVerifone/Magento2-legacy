@@ -143,13 +143,8 @@ class AuthorizationRequest implements BuilderInterface
             }
         }
 
-        // 3-D Secure
-        if (!$payment->is3DSEnabled($order)) {
-            $values['PBX_3DS'] = 'N';
-        }
-
         // Verifone e-commerce => Magento
-        $values['PBX_RETOUR'] = 'M:M;R:R;T:T;A:A;B:B;C:C;D:D;E:E;F:F;G:G;H:H;I:I;J:J;N:N;O:O;P:P;Q:Q;S:S;W:W;Y:Y;K:K';
+        $values['PBX_RETOUR'] = 'M:M;R:R;T:T;A:A;B:B;C:C;D:D;E:E;F:F;G:G;H:H;I:I;J:J;N:N;O:O;P:P;Q:Q;S:S;W:W;Y:Y;v:v;K:K';
         $values['PBX_RUF1'] = 'POST';
 
         // Choose correct language
@@ -186,6 +181,10 @@ class AuthorizationRequest implements BuilderInterface
             $values['PBX_REFUSE'] .= $s;
             $values['PBX_REPONDRE_A'] .= $s;
         }
+
+        // 3DSv2 parameters
+        $values['PBX_SHOPPINGCART'] = $payment->getXmlShoppingCartInformation($order);
+        $values['PBX_BILLING'] = $payment->getXmlBillingInformation($order);
 
         // Sort parameters for simpler debug
         ksort($values);

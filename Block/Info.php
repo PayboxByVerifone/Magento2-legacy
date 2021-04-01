@@ -163,6 +163,7 @@ class Info extends ConfigurableInfo
         $action = $info->getPbxepAction();
         $action_model = new \Paybox\Epayment\Model\Admin\Payment\Action();
         $actions = $action_model->toOptionArray();
+        $result = '';
         foreach ($actions as $act) {
             if ($act['value'] == $action) {
                 $result = $act['label'];

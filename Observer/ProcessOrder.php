@@ -94,8 +94,6 @@ class ProcessOrder implements ObserverInterface
         }
 
         if ($method->getConfigAutoCaptureMode() != \Paybox\Epayment\Model\Payment\AbstractPayment::PBXACTION_MODE_SHIPMENT) {
-            //            var_dump($method->getConfigAutoCaptureMode());
-            //            die();
             return $this;
         }
 

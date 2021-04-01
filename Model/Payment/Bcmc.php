@@ -24,5 +24,4 @@ namespace Paybox\Epayment\Model\Payment;
 class Bcmc extends AbstractPayment
 {
     protected $_code = 'pbxep_bcmc';
-    protected $_3dsMandatory = true;
 }

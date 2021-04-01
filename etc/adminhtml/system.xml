@@ -136,6 +136,18 @@
                     <source_model>Paybox\Epayment\Model\Config\Source\ResponsiveYesNo</source_model>
                     <config_path>pbxep/info/responsive</config_path>
                 </field>
+                <field id="min_amount" translate="label comment" type="text" sortOrder="10" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Min order amount</label>
+                    <validate>required-entry validate-digits validate-length maximum-length-9</validate>
+                    <config_path>pbxep/merchant/min_amount</config_path>
+                </field>
+                <field id="max_amount" translate="label comment" type="text" sortOrder="10" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Max order amount</label>
+                    <validate>required-entry validate-digits validate-length maximum-length-9</validate>
+                    <config_path>pbxep/merchant/max_amount</config_path>
+                </field>
             </group>
         </section>
         <section id="pbxep_payments" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">

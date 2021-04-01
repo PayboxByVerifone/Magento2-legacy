@@ -12,7 +12,7 @@
  * to obtain it through the web, please send a note to
  * support@paybox.com so we can mail you a copy immediately.
  *
- * @version   1.0.8-meqp
+ * @version   2.0.1-exception
  * @author    BM Services <contact@bm-services.com>
  * @copyright 2012-2017 Verifone e-commerce
  * @license   http://opensource.org/licenses/OSL-3.0
@@ -80,8 +80,6 @@ abstract class AbstractPayment extends AbstractMethod
     /**
      * Verifone e-commerce specific options
      */
-    protected $_3dsAllowed = false;
-    protected $_3dsMandatory = false;
     protected $_allowDeferredDebit = false;
     protected $_allowImmediatDebit = true;
     protected $_allowManualDebit = false;
@@ -116,6 +114,7 @@ abstract class AbstractPayment extends AbstractMethod
             $data
         );
 
+        $this->_scopeConfig = $scopeConfig;
         $this->_objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         // $this->_logger = $logger;
 
@@ -360,6 +359,9 @@ abstract class AbstractPayment extends AbstractMethod
         $data = $paybox->directCapture($amount, $order, $txn);
         $this->logDebug(sprintf('Order %s: Capture - response code %s', $order->getIncrementId(), $data['CODEREPONSE']));
 
+        // Fix possible invalid utf-8 chars
+        $data = array_map('utf8_decode', $data);
+
         // Message
         if ($data['CODEREPONSE'] == '00000') {
             $message = 'Payment was captured by Verifone e-commerce.';
@@ -379,8 +381,8 @@ abstract class AbstractPayment extends AbstractMethod
             $data,
             $close,
             [
-            self::CALL_NUMBER => $data['NUMTRANS'],
-            self::TRANSACTION_NUMBER => $data['NUMAPPEL'],
+            self::CALL_NUMBER => $data['NUMAPPEL'],
+            self::TRANSACTION_NUMBER => $data['NUMTRANS'],
             ],
             $txn
         );
@@ -494,7 +496,7 @@ abstract class AbstractPayment extends AbstractMethod
 
     public function getOrderPlaceRedirectUrl()
     {
-        return $this->getUrl('pbxep/payment/redirect', ['_secure' => true]);
+        return true;
         // To not send *invoice* email (invoice != order)
         // return false;
     }
@@ -554,6 +556,14 @@ abstract class AbstractPayment extends AbstractMethod
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
         if (parent::isAvailable($quote)) {
+            $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
+            $minAmount = $this->_scopeConfig->getValue('pbxep/merchant/min_amount', $storeScope);
+            $maxAmount = $this->_scopeConfig->getValue('pbxep/merchant/max_amount', $storeScope);
+            $total = $quote->getGrandTotal();
+            if (!($total >= $minAmount && $total <= $maxAmount)) {
+                return false;
+            }
+
             if ($this->getHasCctypes()) {
                 $cctypes = $this->getConfigData('cctypes', ($quote ? $quote->getStoreId() : null));
                 $cctypes = preg_replace('/NONE,?/', '', $cctypes);
@@ -565,41 +575,130 @@ abstract class AbstractPayment extends AbstractMethod
     }
 
     /**
-     * Check whether 3DS is enabled
+     * Format a value to respect specific rules
+     *
+     * @param string $value
+     * @param string $type
+     * @param int $maxLength
+     * @return string
+     */
+    protected function formatTextValue($value, $type, $maxLength = null)
+    {
+        /*
+        AN : Alphanumerical without special characters
+        ANP : Alphanumerical with spaces and special characters
+        ANS : Alphanumerical with special characters
+        N : Numerical only
+        A : Alphabetic only
+        */
+
+        switch ($type) {
+            default:
+            case 'AN':
+                $value = $this->_objectManager->get('Magento\Framework\Filter\RemoveAccents')->filter($value);
+                break;
+            case 'ANP':
+                $value = $this->_objectManager->get('Magento\Framework\Filter\RemoveAccents')->filter($value);
+                $value = preg_replace('/[^-. a-zA-Z0-9]/', '', $value);
+                break;
+            case 'ANS':
+                break;
+            case 'N':
+                $value = preg_replace('/[^0-9.]/', '', $value);
+                break;
+            case 'A':
+                $value = $this->_objectManager->get('Magento\Framework\Filter\RemoveAccents')->filter($value);
+                $value = preg_replace('/[^A-Za-z]/', '', $value);
+                break;
+        }
+        // Remove carriage return characters
+        $value = trim(preg_replace("/\r|\n/", '', $value));
+
+        // Cut the string when needed
+        if (!empty($maxLength) && is_numeric($maxLength) && $maxLength > 0) {
+            if (function_exists('mb_strlen')) {
+                if (mb_strlen($value) > $maxLength) {
+                    $value = mb_substr($value, 0, $maxLength);
+                }
+            } elseif (strlen($value) > $maxLength) {
+                $value = substr($value, 0, $maxLength);
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * Import XML content as string and use DOMDocument / SimpleXML to validate, if available
+     *
+     * @param string $xml
+     * @return string
+     */
+    protected function exportToXml($xml)
+    {
+        if (class_exists('DOMDocument')) {
+            $doc = new \DOMDocument();
+            $doc->loadXML($xml);
+            $xml = $doc->saveXML();
+        } elseif (function_exists('simplexml_load_string')) {
+            $xml = simplexml_load_string($xml)->asXml();
+        }
+
+        $xml = trim(preg_replace('/(\s*)(' . preg_quote('<?xml version="1.0" encoding="utf-8"?>') . ')(\s*)/', '$2', $xml));
+        $xml = trim(preg_replace("/\r|\n/", '', $xml));
+
+        return $xml;
+    }
+
+    /**
+     * Generate XML value for PBX_BILLING parameter
      *
      * @param  Mage_Sales_Model_Order $order
-     * @return boolean
+     * @return string
      */
-    public function is3DSEnabled(Order $order)
+    public function getXmlBillingInformation(Order $order)
     {
-        // If 3DS is mandatory, answer is simple
-        if ($this->_3dsMandatory) {
-            return true;
-        }
+        // Retrieve billing address from order
+        $address = $order->getBillingAddress();
 
-        // If 3DS is not allowed, answer is simple
-        if (!$this->_3dsAllowed) {
-            return false;
-        }
+        $firstName = $this->formatTextValue($address->getFirstName(), 'ANP', 30);
+        $lastName = $this->formatTextValue($address->getLastName(), 'ANP', 30);
+        $addressLine1 = $this->formatTextValue($address->getStreetLine(1), 'ANS', 50);
+        $addressLine2 = $this->formatTextValue($address->getStreetLine(2), 'ANS', 50);
+        $zipCode = $this->formatTextValue($address->getPostcode(), 'ANS', 16);
+        $city = $this->formatTextValue($address->getCity(), 'ANS', 50);
+        $countryMapper = $this->_objectManager->get('Paybox\Epayment\Model\Iso3166Country');
+        $countryCode = (int)$countryMapper->getNumericCode($address->getCountryId());
 
-        // Otherwise lets see the configuration
-        switch ($this->getConfigData('tds_active')) {
-            case 'always':
-                return true;
-            case 'condition':
-                // Minimum order total
-                $value = $this->getConfigData('tds_min_order_total');
-                if (!empty($value)) {
-                    $total = round($order->getGrandTotal(), 2);
-                    if ($total >= round($value, 2)) {
-                        return true;
-                    }
-                }
-                return false;
-        }
+        $xml = sprintf(
+            '<?xml version="1.0" encoding="utf-8"?><Billing><Address><FirstName>%s</FirstName><LastName>%s</LastName><Address1>%s</Address1><Address2>%s</Address2><ZipCode>%s</ZipCode><City>%s</City><CountryCode>%d</CountryCode></Address></Billing>',
+            $firstName,
+            $lastName,
+            $addressLine1,
+            $addressLine2,
+            $zipCode,
+            $city,
+            $countryCode
+        );
 
-        // Always off
-        return false;
+        return $this->exportToXml($xml);
+    }
+
+    /**
+     * Generate XML value for PBX_SHOPPINGCART parameter
+     *
+     * @param  Mage_Sales_Model_Order $order
+     * @return string
+     */
+    public function getXmlShoppingCartInformation(Order $order)
+    {
+        $totalQuantity = 0;
+        foreach ($order->getAllVisibleItems() as $item) {
+            $totalQuantity += (int)$item->getQtyOrdered();
+        }
+        $totalQuantity = min($totalQuantity, 99);
+
+        return sprintf('<?xml version="1.0" encoding="utf-8"?><shoppingcart><total><totalQuantity>%d</totalQuantity></total></shoppingcart>', $totalQuantity);
     }
 
     public function logDebug($message)
@@ -643,8 +742,6 @@ abstract class AbstractPayment extends AbstractMethod
         $invoice->register();
         $invoice->pay();
 
-        //        var_dump('makeCapture');
-        //        die();
         //        $transactionSave = $this->_objectManager->get('Magento\Framework\Model\ResourceModel\Db\TransactionManager')
         //                ->addObject($invoice)
         //                ->addObject($order);
@@ -686,6 +783,9 @@ abstract class AbstractPayment extends AbstractMethod
         // Call Verifone e-commerce Direct
         $connector = $this->getPaybox();
         $data = $connector->directRefund((float) $amount, $order, $txn);
+
+        // Fix possible invalid utf-8 chars
+        $data = array_map('utf8_decode', $data);
 
         // Message
         if ($data['CODEREPONSE'] == '00000') {
@@ -731,15 +831,17 @@ abstract class AbstractPayment extends AbstractMethod
             if (empty($cctype)) {
                 $ccType = $paymentInfo->getAdditionalInformation('cc_type');
                 if (empty($cctype)) {
-                    $errorMsg = 'Please select a valid credit card type';
-                    throw new \LogicException(__($errorMsg));
+                    throw new \Magento\Framework\Exception\LocalizedException(
+                        __('Please select a valid credit card type')
+                    );
                 }
             }
 
             $selected = explode(',', $this->getConfigData('cctypes'));
             if (!in_array($cctype, $selected)) {
-                $errorMsg = 'Please select a valid credit card type';
-                throw new \LogicException(__($errorMsg));
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __('Please select a valid credit card type')
+                );
             }
         }
 

@@ -162,35 +162,5 @@
                 </depends>
             </field>
         </group>
-        <group id="pbxep_cb_tds" translate="label" showInDefault="1" showInWebsite="1" sortOrder="30">
-            <label>3-D Secure</label>
-            <depends>
-                <field id="pbxep_payments/pbxep_cb/active">1</field>
-            </depends>
-            <field id="tds_info" translate="label comment" sortOrder="305" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label><![CDATA[Make sure that the contract signed with your bank allows 3-D Secure before proceeding with setup.]]></label>
-                <frontend_model>Paybox\Epayment\Block\Admin\Field\Info</frontend_model>
-                <depends>
-                    <field id="pbxep_payments/pbxep_cb/active">1</field>
-                </depends>
-            </field>
-            <field id="tds_active" translate="label comment" type="select" sortOrder="310" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Enable 3-D Secure</label>
-                <comment><![CDATA[<span style="color: red;">Warning: your bank may enforce 3-D Secure.<br/>Make sure your setup is coherent with your bank, Verifone e-commerce and Magento module.</span>]]></comment>
-                <source_model>Paybox\Epayment\Model\Admin\Payment\Use3ds</source_model>
-                <config_path>payment/pbxep_cb/tds_active</config_path>
-                <depends>
-                    <field id="pbxep_payments/pbxep_cb/active">1</field>
-                </depends>
-            </field>
-            <field id="tds_min_order_total" translate="label comment" type="text" sortOrder="330" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Minimum Order Amount</label>
-                <config_path>payment/pbxep_cb/tds_min_order_total</config_path>
-                <depends>
-                    <field id="tds_active">condition</field>
-                    <field id="pbxep_payments/pbxep_cb/active">1</field>
-                </depends>
-            </field>
-        </group>
     </group>
 </include>

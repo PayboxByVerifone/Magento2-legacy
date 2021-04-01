@@ -12,19 +12,23 @@
  * to obtain it through the web, please send a note to
  * support@paybox.com so we can mail you a copy immediately.
  *
- * @version   1.0.7-psr
+ * @version   2.0.1
  * @author    BM Services <contact@bm-services.com>
  * @copyright 2012-2017 Verifone e-commerce
  * @license   http://opensource.org/licenses/OSL-3.0
  * @link      http://www.paybox.com/
  */
 
-namespace Paybox\Epayment\Model\Payment;
+namespace Paybox\Epayment\Model\Admin\Payment;
 
-class Maestro extends AbstractPayment
+class Version3ds
 {
-    protected $_code = 'pbxep_maestro';
-    protected $_allowManualDebit = true;
-    protected $_allowDeferredDebit = true;
-    protected $_allowRefund = true;
+    public function toOptionArray()
+    {
+        $options = [
+            ['value' => '1', 'label' => __('3DS v1')],
+            ['value' => '2', 'label' => __('3DS v2 (default)')],
+        ];
+        return $options;
+    }
 }

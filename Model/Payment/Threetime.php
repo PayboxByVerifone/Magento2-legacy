@@ -31,7 +31,6 @@ class Threetime extends AbstractPayment
     const XML_PATH = 'payment/pbxep_threetime/cctypes';
 
     protected $_code = self::CODE;
-    protected $_3dsAllowed = true;
     protected $_hasCctypes = true;
     protected $_allowManualDebit = true;
     protected $_allowDeferredDebit = true;

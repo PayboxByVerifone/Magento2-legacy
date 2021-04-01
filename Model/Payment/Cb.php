@@ -21,13 +21,14 @@
 
 namespace Paybox\Epayment\Model\Payment;
 
+use \Magento\Sales\Model\Order;
+
 class Cb extends AbstractPayment
 {
     const CODE = 'pbxep_cb';
     const XML_PATH = 'payment/pbxep_cb/cctypes';
 
     protected $_code = self::CODE;
-    protected $_3dsAllowed = true;
     protected $_hasCctypes = true;
     protected $_allowManualDebit = true;
     protected $_allowDeferredDebit = true;

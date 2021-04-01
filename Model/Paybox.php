@@ -242,6 +242,7 @@ class Paybox
         'W' => 'date',
         'Y' => 'country',
         'Z' => 'paymentIndex',
+        'v' => '3dsVersion',
     ];
     protected $_objectManager = null;
     protected $_storeManager = null;
@@ -291,15 +292,15 @@ class Paybox
         $now = new \DateTime('now', new \DateTimeZone('Europe/Paris'));
         $fields = [
             'ACTIVITE' => '024',
-            'VERSION' => '00103',
-            'CLE' => $config->getPassword(),
+            'VERSION' => $version,
+            'CLE' => $password,
             'DATEQ' => $now->format('dmYHis'),
             'DEVISE' => sprintf('%03d', $this->getCurrency($order)),
             'IDENTIFIANT' => $config->getIdentifier(),
             'MONTANT' => sprintf('%010d', $amount),
-            'NUMAPPEL' => sprintf('%010d', $transNumber),
+            'NUMAPPEL' => sprintf('%010d', $callNumber),
             'NUMQUESTION' => sprintf('%010d', $now->format('U')),
-            'NUMTRANS' => sprintf('%010d', $callNumber),
+            'NUMTRANS' => sprintf('%010d', $transNumber),
             'RANG' => sprintf('%02d', $config->getRank()),
             'REFERENCE' => $this->tokenizeOrder($order),
             'SITE' => sprintf('%07d', $config->getSite()),
@@ -313,6 +314,15 @@ class Paybox
                 $fields['ACQUEREUR'] = 'PAYPAL';
                 break;
         }
+
+        // Sort parameters
+        ksort($fields);
+
+        // Sign values
+        $sign = $this->signValues($fields);
+
+        // Hash HMAC
+        $fields['HMAC'] = $sign;
 
         $urls = $config->getDirectUrls();
         $url = $this->checkUrls($urls);
@@ -417,13 +427,8 @@ class Paybox
             }
         }
 
-        // 3-D Secure
-        if (!$payment->is3DSEnabled($order)) {
-            $values['PBX_3DS'] = 'N';
-        }
-
         // Verifone e-commerce => Magento
-        $values['PBX_RETOUR'] = 'M:M;R:R;T:T;A:A;B:B;C:C;D:D;E:E;F:F;G:G;H:H;I:I;J:J;N:N;O:O;P:P;Q:Q;S:S;W:W;Y:Y;K:K';
+        $values['PBX_RETOUR'] = 'M:M;R:R;T:T;A:A;B:B;C:C;D:D;E:E;F:F;G:G;H:H;I:I;J:J;N:N;O:O;P:P;Q:Q;S:S;W:W;Y:Y;v:v;K:K';
         $values['PBX_RUF1'] = 'POST';
 
         // Choose correct language
@@ -498,6 +503,10 @@ class Paybox
         $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
         $moduleInfo = $this->_objectManager->get('Magento\Framework\Module\ModuleList')->getOne('Paybox_Epayment');
         $values['PBX_VERSION'] = 'Magento_' . $productMetadata->getVersion() . '-' . 'paybox' . '_' . $moduleInfo['setup_version'];
+
+        // 3DSv2 parameters
+        $values['PBX_SHOPPINGCART'] = $payment->getXmlShoppingCartInformation($order);
+        $values['PBX_BILLING'] = $payment->getXmlBillingInformation($order);
 
         // Sort parameters for simpler debug
         ksort($values);

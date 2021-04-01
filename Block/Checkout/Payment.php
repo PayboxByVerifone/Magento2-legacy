@@ -21,11 +21,14 @@
 
 namespace Paybox\Epayment\Block\Checkout;
 
-class Payment
+use Magento\Framework\View\Element\Template;
+
+class Payment extends Template
 {
     protected function _construct()
     {
         parent::_construct();
+
         $this->setTemplate('pbxep/checkout-payment.phtml');
     }
 
@@ -35,6 +38,7 @@ class Payment
         if (!empty($head)) {
             $head->addCss('css/pbxep/styles.css');
         }
+
         return parent::_prepareLayout();
     }
 

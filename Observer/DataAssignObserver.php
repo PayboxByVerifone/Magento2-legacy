@@ -50,15 +50,17 @@ class DataAssignObserver extends AbstractDataAssignObserver
 
         $cctype = $payment->getCcType();
         if (empty($cctype)) {
-            $errorMsg = 'Please select a valid credit card type';
-            throw new \LogicException(__($errorMsg));
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('Please select a valid credit card type')
+            );
         }
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $selected = explode(',', $objectManager->get('Paybox\Epayment\Model\Ui\PbxepcbConfig')->getCards());
         if (!in_array($cctype, $selected)) {
-            $errorMsg = 'Please select a valid credit card type';
-            throw new \LogicException(__($errorMsg));
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('Please select a valid credit card type')
+            );
         }
     }
 }
