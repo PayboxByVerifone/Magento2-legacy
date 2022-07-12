@@ -283,17 +283,14 @@ class Paybox
         $transNumber = $transaction->getAdditionalInformation(AbstractPayment::TRANSACTION_NUMBER);
 
         $version = '00103';
-        $password = $config->getPassword();
         if ($config->getSubscription() == 'plus') {
             $version = '00104';
-            $password = $config->getPasswordplus();
         }
 
         $now = new \DateTime('now', new \DateTimeZone('Europe/Paris'));
         $fields = [
             'ACTIVITE' => '024',
             'VERSION' => $version,
-            'CLE' => $password,
             'DATEQ' => $now->format('dmYHis'),
             'DEVISE' => sprintf('%03d', $this->getCurrency($order)),
             'IDENTIFIANT' => $config->getIdentifier(),
@@ -305,6 +302,7 @@ class Paybox
             'REFERENCE' => $this->tokenizeOrder($order),
             'SITE' => sprintf('%07d', $config->getSite()),
             'TYPE' => sprintf('%05d', (int) $type),
+            'HASH' => strtoupper($config->getHmacAlgo()),
         ];
 
         // Specific Paypal
@@ -319,10 +317,7 @@ class Paybox
         ksort($fields);
 
         // Sign values
-        $sign = $this->signValues($fields);
-
-        // Hash HMAC
-        $fields['HMAC'] = $sign;
+        $fields['HMAC'] = $this->signValues($fields);
 
         $urls = $config->getDirectUrls();
         $url = $this->checkUrls($urls);
@@ -452,7 +447,8 @@ class Paybox
             $values['PBX_SOURCE'] = 'RWD';
         }
 
-        //Paypal Specicif
+        // PayPal specific code
+        /*
         if ($payment->getCode() == 'pbxep_paypal') {
             $separator = '#';
             $address = $order->getBillingAddress();
@@ -481,6 +477,7 @@ class Paybox
             $data_Paypal .= $this->cleanForPaypalData(implode('-', $products), 127);
             $values['PBX_PAYPAL_DATA'] = $this->cleanForPaypalData($data_Paypal, 490);
         }
+        */
 
         // Misc.
         $values['PBX_TIME'] = date('c');
@@ -512,10 +509,7 @@ class Paybox
         ksort($values);
 
         // Sign values
-        $sign = $this->signValues($values);
-
-        // Hash HMAC
-        $values['PBX_HMAC'] = $sign;
+        $values['PBX_HMAC'] = $this->signValues($values);
 
         return $values;
     }
@@ -792,7 +786,12 @@ class Paybox
 
         // Prepare key
         $hmac = $config->getHmacKey();
-        $key = pack('H*', $hmac);
+        try {
+            $key = pack('H*', $hmac);
+        } catch (\Exception $e) {
+            $errorMsg = 'Unable to create hmac signature. Maybe a wrong configuration.';
+            throw new \LogicException(__($errorMsg));
+        }
 
         // Sign values
         $sign = hash_hmac($config->getHmacAlgo(), $query, $key);

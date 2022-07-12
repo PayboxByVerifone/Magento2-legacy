@@ -45,7 +45,7 @@ class UpgradeData implements UpgradeDataInterface
         $setup->startSetup();
 
         // Merge CB/VISA/MC/ECB into one method
-        if (!empty($context->getVersion()) && version_compare($context->getVersion(), '2.0.2', '<=')) {
+        if (!empty($context->getVersion()) && version_compare($context->getVersion(), '2.0.3', '<=')) {
             $this->writerInterface->save('payment/pbxep_cb/cctypes', 'CB', 'default', 0);
             $this->writerInterface->save('payment/pbxep_threetime/cctypes', 'CB', 'default', 0);
         }

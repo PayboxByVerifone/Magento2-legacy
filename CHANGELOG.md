@@ -1,4 +1,13 @@
 # Change Log
+## [2.0.5] 2022-07-12
+- Order button on wait 
+- various minor bugfixes
+
+## [2.0.4] 2021-03-16
+- fixing name of model Creditagricole
+
+## [2.0.3] 2021-03-16
+- minor colorising changes
 
 ## [2.0.2] 2021-03-16
 

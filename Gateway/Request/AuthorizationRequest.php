@@ -190,10 +190,7 @@ class AuthorizationRequest implements BuilderInterface
         ksort($values);
 
         // Sign values
-        $sign = $this->signValues($values);
-
-        // Hash HMAC
-        $values['PBX_HMAC'] = $sign;
+        $values['PBX_HMAC'] = $this->signValues($values);
 
         return $values;
     }

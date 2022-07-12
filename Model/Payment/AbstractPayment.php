@@ -661,17 +661,17 @@ abstract class AbstractPayment extends AbstractMethod
         // Retrieve billing address from order
         $address = $order->getBillingAddress();
 
-        $firstName = $this->formatTextValue($address->getFirstName(), 'ANP', 30);
-        $lastName = $this->formatTextValue($address->getLastName(), 'ANP', 30);
+        $firstName = $this->formatTextValue($address->getFirstName(), 'ANP', 22);
+        $lastName = $this->formatTextValue($address->getLastName(), 'ANP', 22);
         $addressLine1 = $this->formatTextValue($address->getStreetLine(1), 'ANS', 50);
         $addressLine2 = $this->formatTextValue($address->getStreetLine(2), 'ANS', 50);
-        $zipCode = $this->formatTextValue($address->getPostcode(), 'ANS', 16);
+        $zipCode = $this->formatTextValue($address->getPostcode(), 'ANS', 10);
         $city = $this->formatTextValue($address->getCity(), 'ANS', 50);
         $countryMapper = $this->_objectManager->get('Paybox\Epayment\Model\Iso3166Country');
         $countryCode = (int)$countryMapper->getNumericCode($address->getCountryId());
 
         $xml = sprintf(
-            '<?xml version="1.0" encoding="utf-8"?><Billing><Address><FirstName>%s</FirstName><LastName>%s</LastName><Address1>%s</Address1><Address2>%s</Address2><ZipCode>%s</ZipCode><City>%s</City><CountryCode>%d</CountryCode></Address></Billing>',
+            '<?xml version="1.0" encoding="utf-8"?><Billing><Address><FirstName>%s</FirstName><LastName>%s</LastName><Address1>%s</Address1><Address2>%s</Address2><ZipCode>%s</ZipCode><City>%s</City><CountryCode>%03d</CountryCode></Address></Billing>',
             $firstName,
             $lastName,
             $addressLine1,
@@ -696,7 +696,7 @@ abstract class AbstractPayment extends AbstractMethod
         foreach ($order->getAllVisibleItems() as $item) {
             $totalQuantity += (int)$item->getQtyOrdered();
         }
-        $totalQuantity = min($totalQuantity, 99);
+        $totalQuantity = max(1, min($totalQuantity, 99));
 
         return sprintf('<?xml version="1.0" encoding="utf-8"?><shoppingcart><total><totalQuantity>%d</totalQuantity></total></shoppingcart>', $totalQuantity);
     }
@@ -829,11 +829,12 @@ abstract class AbstractPayment extends AbstractMethod
             $cctype = $paymentInfo->getCcType();
 
             if (empty($cctype)) {
-                $ccType = $paymentInfo->getAdditionalInformation('cc_type');
+                $cctype = $paymentInfo->getAdditionalInformation('cc_type');
+                // If the cc_type wasn't provided, we might be in the XHR request made after a new payment method
+                // selection, which does not provide the field. We can continue, the field will be validated when
+                // using the place order button.
                 if (empty($cctype)) {
-                    throw new \Magento\Framework\Exception\LocalizedException(
-                        __('Please select a valid credit card type')
-                    );
+                    return $this;
                 }
             }
 
@@ -956,7 +957,7 @@ abstract class AbstractPayment extends AbstractMethod
         $message = 'An unexpected error have occured while processing Verifone e-commerce payment (%s).';
         $error = is_null($e) ? 'unknown error' : $e->getMessage();
         $error = __($error);
-        $message = $this->__($message, $error);
+        $message = __($message, $error);
         $data['status'] = $message;
         $status = $order->addStatusHistoryComment($message);
         $status->save();
