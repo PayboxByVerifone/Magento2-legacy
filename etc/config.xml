@@ -63,6 +63,7 @@
                 <status_authorized>pbxep_authorized</status_authorized>
                 <payment_action>immediate</payment_action>
                 <delay>1</delay>
+                <exemption_3ds_max_amount></exemption_3ds_max_amount>
                 <cards>
                     <CB>
                         <label>CB</label>

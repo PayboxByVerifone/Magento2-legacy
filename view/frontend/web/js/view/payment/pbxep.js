@@ -32,11 +32,11 @@ define(
         rendererList.push(
             {
                 type: 'pbxep_cb',
-                component: 'Paybox_Epayment/js/view/payment/method-renderer/pbxep_multi-method'
+                component: 'Paybox_Epayment/js/view/payment/method-renderer/pbxep_simple-method'
             },
             {
                 type: 'pbxep_threetime',
-                component: 'Paybox_Epayment/js/view/payment/method-renderer/pbxep_multi-method'
+                component: 'Paybox_Epayment/js/view/payment/method-renderer/pbxep_simple-method'
             },
             {
                 type: 'pbxep_paypal',

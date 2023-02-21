@@ -59,6 +59,11 @@ final class PbxepcbConfigProvider implements ConfigProviderInterface
 
         $cards = [];
         $types = $pbxepcbConfig->getCards();
+
+        if (is_null($types)) {
+            return $cards;
+        }
+
         if (!is_array($types)) {
             $types = explode(',', $types);
         }

@@ -28,8 +28,8 @@ class Redirect extends \Magento\Framework\View\Element\Template
 
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
-        array $data = [],
-        \Paybox\Epayment\Helper\Data $helper
+        \Paybox\Epayment\Helper\Data $helper,
+        array $data = []
     ) {
         parent::__construct($context, $data);
 

@@ -167,3 +167,6 @@
 
 "You notified customer about invoice #%1.","Le client a été notifié de la création de la facture #%1."
 "Captured amount of %1 online.","Montant capturé de %1 en ligne."
+
+"3DS exemption","Exemption 3DS"
+"Enable 3DS exemption means of payment only for orders with amount equal or smaller than the amount configured (let it empty for no condition)","Activer l'exemption 3DS pour les commandes dont le montant est inférieur ou égal au montant indiqué (laissez vide pour ne pas activer cette condition)"

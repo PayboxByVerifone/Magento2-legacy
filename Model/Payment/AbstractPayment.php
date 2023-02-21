@@ -566,9 +566,12 @@ abstract class AbstractPayment extends AbstractMethod
 
             if ($this->getHasCctypes()) {
                 $cctypes = $this->getConfigData('cctypes', ($quote ? $quote->getStoreId() : null));
-                $cctypes = preg_replace('/NONE,?/', '', $cctypes);
+                if (!is_null($cctypes)) {
+                    $cctypes = preg_replace('/NONE,?/', '', $cctypes);
+                }
                 return !empty($cctypes);
             }
+
             return true;
         }
         return false;
@@ -602,6 +605,7 @@ abstract class AbstractPayment extends AbstractMethod
                 $value = preg_replace('/[^-. a-zA-Z0-9]/', '', $value);
                 break;
             case 'ANS':
+                $value = $this->_objectManager->get('Magento\Framework\Filter\RemoveAccents')->filter($value);
                 break;
             case 'N':
                 $value = preg_replace('/[^0-9.]/', '', $value);
@@ -625,7 +629,7 @@ abstract class AbstractPayment extends AbstractMethod
             }
         }
 
-        return $value;
+        return trim($value);
     }
 
     /**
@@ -661,17 +665,23 @@ abstract class AbstractPayment extends AbstractMethod
         // Retrieve billing address from order
         $address = $order->getBillingAddress();
 
-        $firstName = $this->formatTextValue($address->getFirstName(), 'ANP', 22);
-        $lastName = $this->formatTextValue($address->getLastName(), 'ANP', 22);
+        $firstName = $this->formatTextValue($address->getFirstName(), 'ANS', 22);
+        $lastName = $this->formatTextValue($address->getLastName(), 'ANS', 22);
         $addressLine1 = $this->formatTextValue($address->getStreetLine(1), 'ANS', 50);
         $addressLine2 = $this->formatTextValue($address->getStreetLine(2), 'ANS', 50);
         $zipCode = $this->formatTextValue($address->getPostcode(), 'ANS', 10);
         $city = $this->formatTextValue($address->getCity(), 'ANS', 50);
         $countryMapper = $this->_objectManager->get('Paybox\Epayment\Model\Iso3166Country');
         $countryCode = (int)$countryMapper->getNumericCode($address->getCountryId());
+        $countryCodeFormat = '%03d';
+        if (empty($countryCode)) {
+            // Send empty string to CountryCode instead of 000
+            $countryCodeFormat = '%s';
+            $countryCode = '';
+        }
 
         $xml = sprintf(
-            '<?xml version="1.0" encoding="utf-8"?><Billing><Address><FirstName>%s</FirstName><LastName>%s</LastName><Address1>%s</Address1><Address2>%s</Address2><ZipCode>%s</ZipCode><City>%s</City><CountryCode>%03d</CountryCode></Address></Billing>',
+            '<?xml version="1.0" encoding="utf-8"?><Billing><Address><FirstName>%s</FirstName><LastName>%s</LastName><Address1>%s</Address1><Address2>%s</Address2><ZipCode>%s</ZipCode><City>%s</City><CountryCode>' . $countryCodeFormat . '</CountryCode></Address></Billing>',
             $firstName,
             $lastName,
             $addressLine1,

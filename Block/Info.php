@@ -67,6 +67,11 @@ class Info extends ConfigurableInfo
     {
         $result = [];
         $cards = $this->getMethod()->getCards();
+
+        if ($this->getMethod()->getConfigData('cctypes') == null) {
+            return $result;
+        }
+
         $selected = explode(',', $this->getMethod()->getConfigData('cctypes'));
         foreach ($cards as $code => $card) {
             if (in_array($code, $selected)) {
@@ -78,6 +83,11 @@ class Info extends ConfigurableInfo
 
     public function getPayboxData()
     {
+
+        if (empty($this->getInfo()->getPbxepAuthorization())) {
+            return [];
+        }
+
         return unserialize($this->getInfo()->getPbxepAuthorization());
     }
 
@@ -94,7 +104,6 @@ class Info extends ConfigurableInfo
     public function getCardImageUrl()
     {
         $data = $this->getPayboxData();
-        $cards = $this->getCreditCards();
         if (!isset($data['cardType'])) {
             return null;
         }
@@ -107,13 +116,15 @@ class Info extends ConfigurableInfo
     public function getCardImageLabel()
     {
         $data = $this->getPayboxData();
-        $cards = $this->getCreditCards();
         if (!isset($data['cardType'])) {
             return null;
         }
+
+        $cards = $this->getCreditCards();
         if (!isset($cards[$data['cardType']])) {
             return null;
         }
+
         $card = $cards[$data['cardType']];
         return $card['label'];
     }

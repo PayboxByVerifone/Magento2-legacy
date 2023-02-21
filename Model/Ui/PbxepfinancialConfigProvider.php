@@ -60,6 +60,11 @@ final class PbxepfinancialConfigProvider implements ConfigProviderInterface
 
         $cards = [];
         $types = $pbxepfinancialConfig->getCards();
+
+        if (is_null($types)) {
+            return $cards;
+        }
+
         if (!is_array($types)) {
             $types = explode(',', $types);
         }

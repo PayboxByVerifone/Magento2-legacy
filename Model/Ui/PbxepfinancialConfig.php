@@ -66,12 +66,6 @@ class PbxepfinancialConfig
         $this->scopeConfig = $scopeConfig;
     }
 
-    public function getReceipentEmail()
-    {
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
-        return $this->scopeConfig->getValue(self::PAYMENT_METHOD_PBXEPFINANCIAL_XML_PATH, $storeScope);
-    }
-
     /**
      * @return string
      */

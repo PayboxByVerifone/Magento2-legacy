@@ -66,12 +66,6 @@ class PbxeppaybuttonsConfig
         $this->scopeConfig = $scopeConfig;
     }
 
-    public function getReceipentEmail()
-    {
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
-        return $this->scopeConfig->getValue(self::PAYMENT_METHOD_PBXEPPAYBUTTONS_XML_PATH, $storeScope);
-    }
-
     /**
      * @return string
      */
