@@ -34,6 +34,7 @@ use \Magento\Payment\Gateway\Command\CommandPoolInterface;
 use \Magento\Payment\Gateway\Config\ValueHandlerPoolInterface;
 use \Magento\Payment\Gateway\Validator\ValidatorPoolInterface;
 use \Magento\Payment\Gateway\Data\PaymentDataObjectFactory;
+use Paybox\Epayment\Helper\Utf8Data;
 
 abstract class AbstractPayment extends AbstractMethod
 {
@@ -360,7 +361,7 @@ abstract class AbstractPayment extends AbstractMethod
         $this->logDebug(sprintf('Order %s: Capture - response code %s', $order->getIncrementId(), $data['CODEREPONSE']));
 
         // Fix possible invalid utf-8 chars
-        $data = array_map('utf8_decode', $data);
+        $data = array_map([Utf8Data::class, 'decode'], $data);
 
         // Message
         if ($data['CODEREPONSE'] == '00000') {
@@ -421,7 +422,7 @@ abstract class AbstractPayment extends AbstractMethod
     public function checkIpnParams(Order $order, array $params)
     {
         // Check required parameters
-        $requiredParams = ['amount', 'transaction', 'error', 'reference', 'sign', 'date', 'time'];
+        $requiredParams = ['amount', 'transaction', 'error', 'reference', 'sign'];
         foreach ($requiredParams as $requiredParam) {
             if (!isset($params[$requiredParam])) {
                 $message = __('Missing ' . $requiredParam . ' parameter in Verifone e-commerce call');
@@ -595,6 +596,11 @@ abstract class AbstractPayment extends AbstractMethod
         A : Alphabetic only
         */
 
+        // Handle possible null values
+        if (!is_string($value)) {
+            $value = '';
+        }
+
         switch ($type) {
             default:
             case 'AN':
@@ -615,8 +621,8 @@ abstract class AbstractPayment extends AbstractMethod
                 $value = preg_replace('/[^A-Za-z]/', '', $value);
                 break;
         }
-        // Remove carriage return characters
-        $value = trim(preg_replace("/\r|\n/", '', $value));
+        // Remove carriage return characters, specials chars
+        $value = trim(preg_replace("/\r|\n|&|<|>/", '', $value));
 
         // Cut the string when needed
         if (!empty($maxLength) && is_numeric($maxLength) && $maxLength > 0) {
@@ -680,8 +686,18 @@ abstract class AbstractPayment extends AbstractMethod
             $countryCode = '';
         }
 
+        $mobilePhoneIntCode = $countryMapper->getPhoneCode($address->getCountryId());
+        $mobilePhoneNumber = $this->formatTextValue($address->getTelephone(), 'N', 10);
+        $mobilePhoneNumberFormat = '%d';
+        if (empty($mobilePhoneIntCode) || empty($mobilePhoneNumber)) {
+            // Send empty string to MobilePhone instead of 0
+            $mobilePhoneNumberFormat = '%s';
+            $mobilePhoneNumber = '';
+        }
+        $mobilePhone = sprintf('<CountryCodeMobilePhone>%s</CountryCodeMobilePhone><MobilePhone>' . $mobilePhoneNumberFormat . '</MobilePhone>', $mobilePhoneIntCode, $mobilePhoneNumber);
+
         $xml = sprintf(
-            '<?xml version="1.0" encoding="utf-8"?><Billing><Address><FirstName>%s</FirstName><LastName>%s</LastName><Address1>%s</Address1><Address2>%s</Address2><ZipCode>%s</ZipCode><City>%s</City><CountryCode>' . $countryCodeFormat . '</CountryCode></Address></Billing>',
+            '<?xml version="1.0" encoding="utf-8"?><Billing><Address><FirstName>%s</FirstName><LastName>%s</LastName><Address1>%s</Address1><Address2>%s</Address2><ZipCode>%s</ZipCode><City>%s</City><CountryCode>' . $countryCodeFormat . '</CountryCode>' . $mobilePhone . '</Address></Billing>',
             $firstName,
             $lastName,
             $addressLine1,
@@ -795,7 +811,7 @@ abstract class AbstractPayment extends AbstractMethod
         $data = $connector->directRefund((float) $amount, $order, $txn);
 
         // Fix possible invalid utf-8 chars
-        $data = array_map('utf8_decode', $data);
+        $data = array_map([Utf8Data::class, 'decode'], $data);
 
         // Message
         if ($data['CODEREPONSE'] == '00000') {
@@ -1083,6 +1099,11 @@ abstract class AbstractPayment extends AbstractMethod
             $this->_createInvoice($payment, $order, $txn);
         }
 
+        // Send email confirmation
+        $emailSender = $this->_objectManager->create('\Magento\Sales\Model\Order\Email\Sender\OrderSender');
+        $emailSender->send($order);
+        $order->setIsCustomerNotified(true);
+
         $payment->save();
         $order->save();
     }
@@ -1108,8 +1129,7 @@ abstract class AbstractPayment extends AbstractMethod
 
             $order->addRelatedObject($invoice);
             $order->addStatusHistoryComment(__('You notified customer about invoice #%1.', $invoice->getIncrementId()))
-                ->setIsCustomerNotified(true)
-                ->save();
+                ->setIsCustomerNotified(true);
         }
 
         return $invoice;

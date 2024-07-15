@@ -24,6 +24,7 @@ namespace Paybox\Epayment\Model;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Paybox\Epayment\Model\Payment\AbstractPayment;
+use Paybox\Epayment\Helper\Utf8Data;
 
 class Paybox
 {
@@ -108,11 +109,9 @@ class Paybox
         '496' => 2,
         '498' => 2,
         '504' => 2,
-        '504' => 2,
         '512' => 3,
         '516' => 2,
         '524' => 2,
-        '532' => 2,
         '532' => 2,
         '533' => 2,
         '548' => 0,
@@ -323,29 +322,28 @@ class Paybox
         $url = $this->checkUrls($urls);
 
         // Init client
-        $clt = new \Magento\Framework\HTTP\ZendClient(
-            $url,
-            [
-            'maxredirects' => 0,
-            'useragent' => 'Magento Verifone e-commerce module',
+        $client = new \GuzzleHttp\Client([
+            'allow_redirects' => false,
+            'headers' => [
+                'User-Agent' => 'Magento Verifone e-commerce module',
+            ],
             'timeout' => 5,
-            ]
-        );
-        $clt->setMethod(\Magento\Framework\HTTP\ZendClient::POST);
-        $clt->setRawData(http_build_query($fields));
+        ]);
 
         // Do call
-        $response = $clt->request();
+        try {
+            $response = $client->request('POST', $url, [
+                'body' => http_build_query($fields),
+            ]);
 
-        if ($response->isSuccessful()) {
             // Process result
             $result = [];
             parse_str($response->getBody(), $result);
             return $result;
+        } catch (\Exception $e) {
+            // Here, there's a problem
+            throw new \LogicException(__('Verifone e-commerce not available. Please try again later.'));
         }
-
-        // Here, there's a problem
-        throw new \LogicException(__('Verifone e-commerce not available. Please try again later.'));
     }
 
     public function buildSystemParams(Order $order, AbstractPayment $payment)
@@ -535,27 +533,24 @@ class Paybox
     public function checkUrls(array $urls)
     {
         // Init client
-        $client = new \Magento\Framework\HTTP\ZendClient(
-            null,
-            [
-            'maxredirects' => 0,
-            'useragent' => 'Magento Verifone e-commerce module',
+        $client = new \GuzzleHttp\Client([
+            'allow_redirects' => false,
+            'headers' => [
+                'User-Agent' => 'Magento Verifone e-commerce module',
+            ],
             'timeout' => 5,
-            ]
-        );
-        $client->setMethod(\Magento\Framework\HTTP\ZendClient::GET);
+        ]);
 
         $error = null;
         foreach ($urls as $url) {
             $testUrl = preg_replace('#^([a-zA-Z0-9]+://[^/]+)(/.*)?$#', '\1/load.html', $url);
-            $client->setUri($testUrl);
 
             try {
-                $response = $client->request();
-                if ($response->isSuccessful()) {
+                $response = $client->request('GET', $testUrl);
+                if ($response->getStatusCode() == 200) {
                     return $url;
                 }
-            } catch (\LogicException $e) {
+            } catch (\Exception $e) {
                 $error = $e;
             }
         }
@@ -592,7 +587,7 @@ class Paybox
         $result = [];
         foreach ($this->_resultMapping as $param => $key) {
             if (isset($params[$param])) {
-                $result[$key] = utf8_encode($params[$param]);
+                $result[$key] = Utf8Data::encode($params[$param]);
             }
         }
 
@@ -626,7 +621,11 @@ class Paybox
 
     public function getBillingName(Order $order)
     {
-        return trim(preg_replace("/[^-. a-zA-Z0-9]/", " ", $this->_objectManager->get('Magento\Framework\Filter\RemoveAccents')->filter($order->getCustomerName())));
+        $name = $order->getCustomerName();
+        $name = $this->_objectManager->get('Magento\Framework\Filter\RemoveAccents')->filter($name);
+        $name = str_replace(' - ', '-', $name);
+        $name = trim(preg_replace('/[^-. a-zA-Z0-9]/', ' ', $name));
+        return $name;
     }
 
     /**
@@ -851,7 +850,7 @@ class Paybox
         }
 
         $goodName = $this->getBillingName($order);
-        if (($goodName != utf8_decode($parts[1])) && ($goodName != $parts[1])) {
+        if (($goodName != Utf8Data::decode($parts[1])) && ($goodName != $parts[1])) {
             $message = 'Consistency error on descrypted token "%s"';
             throw new \LogicException(__($message, $token));
         }

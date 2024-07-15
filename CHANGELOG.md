@@ -1,4 +1,14 @@
 # Change Log
+## [2.0.8] 2024-07-11
+- Add phone number into PBX_BILLING
+- Fix single payment method issue
+- Minor PHP 8.2+ fixes
+
+## [2.0.7] 2024-02-27
+- Fix Order state in some cases
+- Fix compatibility with Magento 2.4.6 & PHP 8.2
+- Update IP whitelist information
+
 ## [2.0.6] 2023-02-08
 - Add 3DS exemption
 - Update 3DSv2 fields
