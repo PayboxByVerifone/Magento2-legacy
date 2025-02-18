@@ -44,4 +44,4 @@ La sauvegarde des paramètres du module dans le BackOffice pose problème (Accou
 
 ### Problème en partie résolu sur Magento 2.3.x (2.3-dev)
 Commit 305bf94b7401065ea0aaf2c18af93ce7b8dfca15)
-Ces champs ne sont en effet plus réencryptés à la sauvegarde, mais ils ne sont plus lus du fichier de configuration (etc/config.xml)
+Ces champs ne sont en effet plus réencryptés à la sauvegarde, mais ils ne sont plus lus du fichier de configuration (etc/config.xml).
